@@ -26,21 +26,19 @@ public class AdministracionIngresosServiceImpl implements AdministracionIngresos
         if (registrosIngreso.isEmpty()) {
             System.out.println("Error, no se encuentran registros para este ingreso de archivo");
         }
-
         AdhInar ingresoDeArchivo = this.adminHorasDaoImpl.obtenerIngresoDeArchivoPorIdentificador(identificadorIngreso);
         if (Objects.isNull(ingresoDeArchivo)) {
             System.out.println("Error ingres de archivo no existe");
         }
-
         ingresoDeArchivo.setEstado('P');
         Integer idEmpleadoAValidar = 0;
-
         AdhRein registroAnterior = null;
-
         for (AdhRein registroAValidar : registrosIngreso) {
+            //el identificador del empleado sigue siendo el mismo o es apenas el primero
             if (!Objects.equals(idEmpleadoAValidar, registroAValidar.getIdempl()) || idEmpleadoAValidar == 0) {
-
+                //confirma que hubo cambia de usuario
                 if (Objects.nonNull(registroAnterior)) {
+                    // empleado anterior no terminó con un registro de salida
                     if (registroAnterior.getTipoin().compareTo('E') == 0) {
                         registroAnterior.setEstado('C');
                         registrarConflicto(registroAnterior.getIdrein(), "Empleado solo registra Entrada en un día.");
@@ -52,8 +50,10 @@ public class AdministracionIngresosServiceImpl implements AdministracionIngresos
 
             }
 
+            // si registro es de tipo entrada
             if (registroAValidar.getTipoin().compareTo('E') == 0) {
                 if (Objects.nonNull(registroAnterior)) {
+                    //conflicto dos entradas seguidas
                     if (registroAnterior.getTipoin().compareTo('E') == 0) {
                         //dos registros de entrada juntos
                         registroAValidar.setEstado('C');
@@ -64,6 +64,7 @@ public class AdministracionIngresosServiceImpl implements AdministracionIngresos
                     }
                 }
             }
+            // registro de salida
             if (registroAValidar.getTipoin().compareTo('S') == 0) {
                 if (Objects.isNull(registroAnterior)) {
                     // primer registro del día es una salida
@@ -78,6 +79,7 @@ public class AdministracionIngresosServiceImpl implements AdministracionIngresos
                     } else {
                         int diferencia = (int) ((registroAValidar.getFechar().getTime() - registroAnterior.getFechar().getTime()) / 1000);
                         int horas = (int) Math.floor(diferencia / 3600);
+                        // falta donde calcular horas
                         System.out.println("diferencia: " + horas);
                     }
                 }

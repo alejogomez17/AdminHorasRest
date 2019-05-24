@@ -32,10 +32,16 @@ import java.util.Objects;
  */
 public class ManejoArchivoServiceImpl implements ManejoArchivoService {
 
+    private final SimpleDateFormat FORMATO_FECHA_HORA   =  new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+    private Path rootLocation = null;
+
+    //cabeceras que se pueden encontrar en el archivo
+    private final String CABECERA_USUARIO = "NO.";
+    private final String CABECERA_FECHA = "FECHA/HORA";
+    private final String CABECERA_ESTADO = "ESTADO";
+
     @Autowired
     private AdminHorasDao adminHorasDaoImpl;
-
-    private Path rootLocation = null;
 
     @Override
     public List<GenEmpl> obtenerEmpleados() {
@@ -63,7 +69,6 @@ public class ManejoArchivoServiceImpl implements ManejoArchivoService {
             int fila = 0;
             int[] posicionesDeCabeceras = null;
             while (rowIterator.hasNext()) {
-
                 fila++;
                 row = rowIterator.next();
 
@@ -77,6 +82,7 @@ public class ManejoArchivoServiceImpl implements ManejoArchivoService {
                     while (cellIterator.hasNext()) {
                         columna++;
                         cell = cellIterator.next();
+                        //identificar la columna que se va a agregar
                         if (columna - 1 == posicionesDeCabeceras[0]) {
                             datosDelRegistro[0] = cell.getStringCellValue();
                         }
@@ -98,6 +104,7 @@ public class ManejoArchivoServiceImpl implements ManejoArchivoService {
                     posicionesDeCabeceras = obtenerCabeceras(datosCabecera.split(";"));
                     if (!existenTodasLasCabeceras(posicionesDeCabeceras)) {
                         System.out.println("No existen las cabeceras reales");
+                        //excepción para cuando el archivo no trae cabeceras necesarias 
                     }
                 }
 
@@ -108,75 +115,7 @@ public class ManejoArchivoServiceImpl implements ManejoArchivoService {
         System.out.println("vamos bn " + lineasDeValores.size());
 
     }
-
-    public void guardarDatosDelRegistro(String[] datosDelRegistro, Integer idinar) {
-
-        SimpleDateFormat formatoFecha = new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
-        AdhRein registro = new AdhRein();
-        registro.setIdempl(Integer.parseInt(datosDelRegistro[0]));
-        try {
-
-            String formatoHora = datosDelRegistro[1].substring(datosDelRegistro[1].length() - 4, datosDelRegistro[1].length());
-            if (formatoHora.trim().toUpperCase().equals("P.M.")) {
-                registro.setFechar(sumarHorasAFecha(formatoFecha.parse(datosDelRegistro[1]), 12));
-            } else {
-                registro.setFechar(formatoFecha.parse(datosDelRegistro[1]));
-            }
-            if (datosDelRegistro[2].trim().toUpperCase().equals("M/ENT")) {
-                registro.setTipoin('E');
-            } else {
-                if (datosDelRegistro[2].trim().toUpperCase().equals("M/SAL")) {
-                    registro.setTipoin('S');
-                }
-            }
-            registro.setEstado('R');
-            registro.setIdinar(idinar);
-            this.adminHorasDaoImpl.insertarRegistroDeIngreso(registro);
-        } catch (ParseException ex) {
-            System.out.println("Error en formato de fecha");
-        }
-
-    }
-
-    private Date sumarHorasAFecha(Date fecha, int horas) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(fecha);
-        calendar.add(Calendar.HOUR, horas);
-        return calendar.getTime();
-    }
-
-    private static final String cabeceraUsuario = "NO.";
-    private static final String cabeceraFecha = "FECHA/HORA";
-    private static final String cabeceraEstado = "ESTADO";
-
-    private int[] obtenerCabeceras(String[] datosCabecera) {
-        int[] posiciones = new int[3];
-        posiciones[0] = -1;
-        posiciones[1] = -1;
-        posiciones[2] = -1;
-        for (int i = 0; i < datosCabecera.length; i++) {
-            if (datosCabecera[i].trim().toUpperCase().equals(cabeceraUsuario)) {
-                posiciones[0] = i;
-            }
-            if (datosCabecera[i].trim().toUpperCase().equals(cabeceraFecha)) {
-                posiciones[1] = i;
-            }
-            if (datosCabecera[i].trim().toUpperCase().equals(cabeceraEstado)) {
-                posiciones[2] = i;
-            }
-        }
-        return posiciones;
-    }
-
-    private boolean existenTodasLasCabeceras(int[] posicionesCabeceras) {
-        for (int i = 0; i < posicionesCabeceras.length; i++) {
-            if (posicionesCabeceras[i] == -1) {
-                return false;
-            }
-        }
-        return true;
-    }
-
+    
     private File obtenerArchivo(MultipartFile file) {
         String nombreNuevo = guardarArchivo(file, "", "", file.getOriginalFilename());
         File archivoAImportar = null;
@@ -212,5 +151,69 @@ public class ManejoArchivoServiceImpl implements ManejoArchivoService {
         }
         return file.getOriginalFilename();
     }
+    
+    private int[] obtenerCabeceras(String[] datosCabecera) {
+        int[] posiciones = new int[3];
+        posiciones[0] = -1;
+        posiciones[1] = -1;
+        posiciones[2] = -1;
+        for (int i = 0; i < datosCabecera.length; i++) {
+            if (datosCabecera[i].trim().toUpperCase().equals(this.CABECERA_USUARIO)) {
+                posiciones[0] = i;
+            }
+            if (datosCabecera[i].trim().toUpperCase().equals(this.CABECERA_FECHA)) {
+                posiciones[1] = i;
+            }
+            if (datosCabecera[i].trim().toUpperCase().equals(this.CABECERA_ESTADO)) {
+                posiciones[2] = i;
+            }
+        }
+        return posiciones;
+    }
+    
+    private boolean existenTodasLasCabeceras(int[] posicionesCabeceras) {
+        for (int i = 0; i < posicionesCabeceras.length; i++) {
+            if (posicionesCabeceras[i] == -1) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void guardarDatosDelRegistro(String[] datosDelRegistro, Integer idinar) {
+        AdhRein registro = new AdhRein();
+        registro.setIdempl(Integer.parseInt(datosDelRegistro[0]));
+        try {
+
+            String formatoHora = datosDelRegistro[1].substring(datosDelRegistro[1].length() - 4, datosDelRegistro[1].length());
+            if (formatoHora.trim().toUpperCase().equals("P.M.")) {
+                registro.setFechar(sumarHorasAFecha(this.FORMATO_FECHA_HORA.parse(datosDelRegistro[1]), 12));
+            } else {
+                registro.setFechar(this.FORMATO_FECHA_HORA.parse(datosDelRegistro[1]));
+            }
+            if (datosDelRegistro[2].trim().toUpperCase().equals("M/ENT")) {
+                registro.setTipoin('E');
+            } else {
+                if (datosDelRegistro[2].trim().toUpperCase().equals("M/SAL")) {
+                    registro.setTipoin('S');
+                }
+            }
+            registro.setEstado('R');
+            registro.setIdinar(idinar);
+            this.adminHorasDaoImpl.insertarRegistroDeIngreso(registro);
+        } catch (ParseException ex) {
+            System.out.println("Error en formato de fecha");
+        }
+    }
+
+    private Date sumarHorasAFecha(Date fecha, int horas) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(fecha);
+        calendar.add(Calendar.HOUR, horas);
+        return calendar.getTime();
+    }
+
+    
+    
 
 }

@@ -28,12 +28,23 @@ public class AplicationController {
     
     @Autowired
     private ManejoArchivoService manejoRegistroServiceImpl;
-    
     @Autowired
     private AdministracionIngresosService administracionIngresosServiceImpl;
-    
     @Autowired
     private AdministracionRegistroService administracionRegistroServiceImpl;
+    
+    @CrossOrigin
+    @PostMapping("/importarArchivo")
+    public String importarArchivo(@RequestParam("archivos") MultipartFile file){
+        
+        
+        try {
+            this.manejoRegistroServiceImpl.importarArchivo(file);
+        } catch (Exception ex) {
+            
+        }
+        return "";        
+    }
     
     @CrossOrigin
     @RequestMapping(path = "/verificarRegistros", method = RequestMethod.POST ,consumes = "application/json")
@@ -65,18 +76,7 @@ public class AplicationController {
         
     }
     
-    @CrossOrigin
-    @PostMapping("/importarArchivo")
-    public String importarArchivo(@RequestParam("archivos") MultipartFile file){
-        
-        
-        try {
-            this.manejoRegistroServiceImpl.importarArchivo(file);
-        } catch (Exception ex) {
-            
-        }
-        return "";        
-    }
+    
 
     @CrossOrigin
     @RequestMapping(path = "/hola", method = RequestMethod.GET)
