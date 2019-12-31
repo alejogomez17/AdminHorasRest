@@ -1,6 +1,7 @@
 package com.desarrollo.adminhoras.api.datos.dao;
 
 import com.desarrollo.adminhoras.api.datos.dominio.AdhCore;
+import com.desarrollo.adminhoras.api.datos.dominio.AdhHore;
 import com.desarrollo.adminhoras.api.datos.dominio.GenEmpl;
 import com.desarrollo.adminhoras.api.datos.dominio.AdhInar;
 import com.desarrollo.adminhoras.api.datos.dominio.AdhRein;
@@ -38,7 +39,7 @@ public class AdminHorasDaoImpl implements AdminHorasDao {
     public AdhInar registrarIngresoDeRegistros(Date fechaIngreso, String descripcion) {
         AdhInar ingresoRegistro = null;
         try {
-            ingresoRegistro = new AdhInar(fechaIngreso, descripcion);
+            ingresoRegistro = new AdhInar(fechaIngreso, descripcion,'R');
             ingresoRegistro = this.EntityManager.merge(ingresoRegistro);
         } catch (Exception ex) {
             System.out.println("error: " + ex.getMessage());
@@ -131,5 +132,16 @@ public class AdminHorasDaoImpl implements AdminHorasDao {
             System.out.println("Error: "+ex.getMessage());
         }
         return conflictos;
+    }
+    
+    @Override
+    @Transactional
+    public AdhHore insertarHorasRegistradas(AdhHore horasRegistradas){
+        try{
+            return this.EntityManager.merge(horasRegistradas);
+        }catch(Exception ex){
+            System.out.println("Error insertando. Desc. "+ex.getMessage());
+        }
+        return null;
     }
 }

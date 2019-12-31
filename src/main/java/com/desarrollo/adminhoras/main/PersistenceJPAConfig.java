@@ -3,11 +3,10 @@ package com.desarrollo.adminhoras.main;
 
 import com.desarrollo.adminhoras.api.datos.dao.AdminHorasDao;
 import com.desarrollo.adminhoras.api.datos.dao.AdminHorasDaoImpl;
-import com.desarrollo.adminhoras.api.negocio.impl.AdministracionIngresosServiceImpl;
-import com.desarrollo.adminhoras.api.negocio.impl.AdministracionRegistroServiceImpl;
+import com.desarrollo.adminhoras.api.negocio.impl.AdministradorIngresosServiceImpl;
+import com.desarrollo.adminhoras.api.negocio.impl.AdministradorRegistroServiceImpl;
 import com.desarrollo.adminhoras.api.negocio.impl.ManejoArchivoServiceImpl;
-import com.desarrollo.adminhoras.api.negocio.service.AdministracionIngresosService;
-import com.desarrollo.adminhoras.api.negocio.service.AdministracionRegistroService;
+import com.desarrollo.adminhoras.api.negocio.control.AdministradorConflictoService;
 import java.util.Properties;
 import javax.persistence.EntityManagerFactory;
 import javax.sql.DataSource;
@@ -23,7 +22,12 @@ import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.context.WebApplicationContext;
-import com.desarrollo.adminhoras.api.negocio.service.ManejoArchivoService;
+import com.desarrollo.adminhoras.api.negocio.control.ManejoArchivoService;
+import com.desarrollo.adminhoras.api.negocio.impl.AdministradorConflictoServiceImpl;
+import com.desarrollo.adminhoras.api.negocio.control.AdministradorRegistroService;
+import com.desarrollo.adminhoras.api.negocio.control.AdministradorIngresosService;
+import com.desarrollo.adminhoras.api.negocio.control.CalculoHorasService;
+import com.desarrollo.adminhoras.api.negocio.impl.CalculoHorasServiceImpl;
 
 /**
  *
@@ -84,13 +88,25 @@ public class PersistenceJPAConfig {
     
     @Bean
     @Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
-    public AdministracionIngresosService administracionIngresosService() {
-        return new AdministracionIngresosServiceImpl();
+    public AdministradorIngresosService administracionIngresosService() {
+        return new AdministradorIngresosServiceImpl();
     }
     
     @Bean
     @Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
-    public AdministracionRegistroService administracionRegistroService() {
-        return new AdministracionRegistroServiceImpl();
+    public AdministradorRegistroService administracionRegistroService() {
+        return new AdministradorRegistroServiceImpl();
+    }
+    
+    @Bean
+    @Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
+    public AdministradorConflictoService administradorConflictoService() {
+        return new AdministradorConflictoServiceImpl();
+    }
+    
+    @Bean
+    @Scope(value = WebApplicationContext.SCOPE_REQUEST, proxyMode = ScopedProxyMode.TARGET_CLASS)
+    public CalculoHorasService calculoHorasService() {
+        return new CalculoHorasServiceImpl();
     }
 }

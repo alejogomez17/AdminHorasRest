@@ -7,10 +7,7 @@ import com.desarrollo.adminhoras.api.datos.dominio.AdhRein;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.poi.ss.usermodel.Cell;
@@ -19,10 +16,10 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.multipart.MultipartFile;
-import com.desarrollo.adminhoras.api.negocio.service.ManejoArchivoService;
+import com.desarrollo.adminhoras.api.negocio.control.ManejoArchivoService;
+import com.desarrollo.adminhoras.api.utilidades.Formato;
+import com.desarrollo.adminhoras.api.utilidades.Tool;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Objects;
 
@@ -32,7 +29,7 @@ import java.util.Objects;
  */
 public class ManejoArchivoServiceImpl implements ManejoArchivoService {
 
-    private final SimpleDateFormat FORMATO_FECHA_HORA   =  new SimpleDateFormat("dd/MM/yyyy hh:mm:ss");
+    
     private Path rootLocation = null;
 
     //cabeceras que se pueden encontrar en el archivo
@@ -51,7 +48,6 @@ public class ManejoArchivoServiceImpl implements ManejoArchivoService {
     @Override
     public void importarArchivo(MultipartFile file) {
         File archivoExcel = obtenerArchivo(file);
-        List<String[]> lineasDeValores = new ArrayList<>();
         try (FileInputStream filefile = new FileInputStream(archivoExcel)) {
             XSSFWorkbook worbook = new XSSFWorkbook(filefile);
             //obtener la hoja que se va leer
@@ -66,30 +62,28 @@ public class ManejoArchivoServiceImpl implements ManejoArchivoService {
             }
 
             Row row;
-            int fila = 0;
+            int filaTirada = 0;
             int[] posicionesDeCabeceras = null;
             while (rowIterator.hasNext()) {
-                fila++;
+                filaTirada++;
                 row = rowIterator.next();
-
                 Iterator<Cell> cellIterator = row.cellIterator();
                 Cell cell;
-                if (fila != 1) {
-                    String[] valoresLinea = new String[3];
-                    int columna = 0;
-                    int agregados = 0;
+                // la fila == 1 contiene las cabeceras
+                if (filaTirada != 1) {
+                    int columnaIterada = 0;
                     String[] datosDelRegistro = new String[3];
                     while (cellIterator.hasNext()) {
-                        columna++;
+                        columnaIterada++;
                         cell = cellIterator.next();
                         //identificar la columna que se va a agregar
-                        if (columna - 1 == posicionesDeCabeceras[0]) {
+                        if (columnaIterada - 1 == posicionesDeCabeceras[0]) {
                             datosDelRegistro[0] = cell.getStringCellValue();
                         }
-                        if (columna - 1 == posicionesDeCabeceras[1]) {
+                        if (columnaIterada - 1 == posicionesDeCabeceras[1]) {
                             datosDelRegistro[1] = cell.getStringCellValue();
                         }
-                        if (columna - 1 == posicionesDeCabeceras[2]) {
+                        if (columnaIterada - 1 == posicionesDeCabeceras[2]) {
                             datosDelRegistro[2] = cell.getStringCellValue();
                         }
                     }
@@ -112,18 +106,14 @@ public class ManejoArchivoServiceImpl implements ManejoArchivoService {
         } catch (Exception ex) {
 
         }
-        System.out.println("vamos bn " + lineasDeValores.size());
-
     }
     
     private File obtenerArchivo(MultipartFile file) {
-        String nombreNuevo = guardarArchivo(file, "", "", file.getOriginalFilename());
         File archivoAImportar = null;
         try {
             archivoAImportar = convertirMultipartAFile(file, file.getOriginalFilename());
 //            FileReader fileR = new FileReader(archivoAImportar);
 //            file2 = new BufferedReader(fileR);
-
         } catch (IllegalStateException ex) {
             System.out.println("Error Obteniendo archivo a importar. Descripción: " + ex.getMessage());
             return null;
@@ -139,17 +129,6 @@ public class ManejoArchivoServiceImpl implements ManejoArchivoService {
         File convFile = new File(nombreArchivo);
         multipart.transferTo(convFile);
         return convFile;
-    }
-
-    private String guardarArchivo(MultipartFile file, String rutaRaiz, String rutaEspecifica, String nombreOriginalArchivo) {
-        this.rootLocation = Paths.get(rutaRaiz);
-        try {
-            Files.copy(file.getInputStream(), this.rootLocation.resolve(file.getOriginalFilename()));
-
-        } catch (Exception e) {
-            System.out.println("Error subiendo el archivo al Servidor");
-        }
-        return file.getOriginalFilename();
     }
     
     private int[] obtenerCabeceras(String[] datosCabecera) {
@@ -187,9 +166,9 @@ public class ManejoArchivoServiceImpl implements ManejoArchivoService {
 
             String formatoHora = datosDelRegistro[1].substring(datosDelRegistro[1].length() - 4, datosDelRegistro[1].length());
             if (formatoHora.trim().toUpperCase().equals("P.M.")) {
-                registro.setFechar(sumarHorasAFecha(this.FORMATO_FECHA_HORA.parse(datosDelRegistro[1]), 12));
+                registro.setFechar(Tool.sumarHorasAFecha(Formato.FORMATO_FECHA_HORA.parse(datosDelRegistro[1]), 12));
             } else {
-                registro.setFechar(this.FORMATO_FECHA_HORA.parse(datosDelRegistro[1]));
+                registro.setFechar(Formato.FORMATO_FECHA_HORA.parse(datosDelRegistro[1]));
             }
             if (datosDelRegistro[2].trim().toUpperCase().equals("M/ENT")) {
                 registro.setTipoin('E');
@@ -205,15 +184,5 @@ public class ManejoArchivoServiceImpl implements ManejoArchivoService {
             System.out.println("Error en formato de fecha");
         }
     }
-
-    private Date sumarHorasAFecha(Date fecha, int horas) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(fecha);
-        calendar.add(Calendar.HOUR, horas);
-        return calendar.getTime();
-    }
-
-    
-    
 
 }

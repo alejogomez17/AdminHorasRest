@@ -2,6 +2,7 @@
 package com.desarrollo.adminhoras.api.datos.dao;
 
 import com.desarrollo.adminhoras.api.datos.dominio.AdhCore;
+import com.desarrollo.adminhoras.api.datos.dominio.AdhHore;
 import com.desarrollo.adminhoras.api.datos.dominio.GenEmpl;
 import com.desarrollo.adminhoras.api.datos.dominio.AdhInar;
 import com.desarrollo.adminhoras.api.datos.dominio.AdhRein;
@@ -31,5 +32,7 @@ public interface AdminHorasDao {
     List<AdhInar> obtenerListaDeIngresoDeArchivos();
     
     List<AdhCore> obtenerConflictosDeRegistroPorIngreso(Integer idingreso);
+    
+    AdhHore insertarHorasRegistradas(AdhHore horasRegistradas);
     
 }

@@ -61,6 +61,12 @@ public class AdhInar implements Serializable {
         this.fecing = fecing;
         this.descri = descri;
     }
+    
+    public AdhInar(Date fecing, String descri,Character estado) {
+        this.fecing = fecing;
+        this.descri = descri;
+        this.estado = estado;
+    }
 
     /**
      * @return the idinre
